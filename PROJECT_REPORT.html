@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Government Scheme Beneficiary Management System - Project Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script>
+  <style>
+    @page {
+      size: A4;
+      margin: 20mm;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      line-height: 1.6;
+      color: #1e293b;
+      background: #f8fafc;
+      margin: 0;
+      padding: 24px;
+    }
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+      background: white;
+      padding: 48px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    }
+    .cover-page {
+      text-align: center;
+      padding: 70px 20px;
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      margin-bottom: 40px;
+      page-break-after: always;
+    }
+    .cover-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 24px;
+    }
+    .cover-subtitle {
+      font-size: 15px;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 30px;
+    }
+    .cover-meta {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.8;
+      margin-top: 50px;
+    }
+    h2 {
+      font-size: 16px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #0f172a;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding-bottom: 4px;
+      margin-top: 32px;
+      margin-bottom: 12px;
+    }
+    h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 16px;
+      margin-bottom: 6px;
+    }
+    p, li {
+      font-size: 13.5px;
+      color: #334155;
+    }
+    ul, ol {
+      padding-left: 20px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    pre {
+      background: #0f172a;
+      color: #f1f5f9;
+      padding: 14px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      overflow-x: auto;
+    }
+    .mermaid {
+      background: #f8fafc;
+      padding: 16px;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      margin: 16px 0;
+      text-align: center;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      .container {
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="no-print" style="text-align: right; margin-bottom: 16px;">
+      <button onclick="window.print()" style="padding: 8px 18px; background: #0f172a; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
+        Print / Save as PDF
+      </button>
+    </div>
+
+    <!-- Title Page -->
+    <div class="cover-page">
+      <div class="cover-title">
+        GOVERNMENT SCHEME BENEFICIARY MANAGEMENT SYSTEM
+      </div>
+      <div class="cover-subtitle">
+        BACHELOR OF TECHNOLOGY IN COMPUTER SCIENCE AND ENGINEERING
+      </div>
+      <p style="font-size: 14px; font-weight: 600; color: #475569; margin-top: 24px;">
+        Subject: Full Stack Development – 2 (FSD-2)
+      </p>
+
+      <div class="cover-meta">
+        <p><strong>Tech Stack:</strong> React 19, Vite, Node.js, Express.js, MongoDB</p>
+        <p style="margin-top: 40px;">Academic Year: 2026–2027</p>
+      </div>
+    </div>
+
+    <!-- Abstract -->
+    <h2>ABSTRACT :-</h2>
+    <p>
+      The Government Scheme Beneficiary Management System is a web application designed to manage government scheme applications and beneficiary records efficiently.
+    </p>
+    <p>
+      The system allows citizens to register, log in, view available government schemes, submit applications, and track their application status. The administrator can manage schemes, verify applications, approve or reject applications, and maintain beneficiary records.
+    </p>
+    <p>
+      The main purpose of this project is to reduce manual work, organize records, and make the government scheme application process easier and more transparent.
+    </p>
+
+    <!-- Problem Statement -->
+    <h2>PROBLEM STATEMENT :-</h2>
+    <p>
+      Many people face difficulties finding information about government schemes and tracking their applications. Managing applications manually can lead to errors, duplicate records, and delays.
+    </p>
+    <p>
+      Therefore, we propose a web-based system that provides a centralized platform for managing government schemes, applications, and beneficiary information.
+    </p>
+
+    <!-- Objectives -->
+    <h2>OBJECTIVES :-</h2>
+    <ul>
+      <li>To provide information about available government schemes.</li>
+      <li>To allow citizens to apply for government schemes online.</li>
+      <li>To maintain application and beneficiary records.</li>
+      <li>To help administrators verify applications.</li>
+      <li>To allow users to track application status.</li>
+      <li>To reduce paperwork and manual errors.</li>
+      <li>To provide secure access to users and administrators.</li>
+    </ul>
+
+    <!-- Project Overview -->
+    <h2>PROJECT OVERVIEW :-</h2>
+    <p>The Government Scheme Beneficiary Management System consists of two main users:</p>
+    <h3>1. Citizen (User) :-</h3>
+    <p>The citizen can register, log in, view government schemes, submit applications, and check application status.</p>
+    <h3>2. Administrator (Admin) :-</h3>
+    <p>The administrator can add or update schemes, view applications, verify application details, approve or reject applications, and manage beneficiary records.</p>
+    <p>The system stores all information in a database and allows users to access the relevant information through a web interface.</p>
+
+    <!-- Main Modules -->
+    <h2>MAIN MODULES :-</h2>
+    <ol>
+      <li><strong>User Registration and Login:</strong> Citizens can create an account and log in using their credentials.</li>
+      <li><strong>Government Schemes:</strong> Users can view scheme names, categories, eligibility criteria, benefits, and required documents.</li>
+      <li><strong>Scheme Application:</strong> Users can select a scheme, fill out an application form, and submit required documents.</li>
+      <li><strong>Admin Dashboard:</strong> The administrator can manage scheme details and view submitted applications.</li>
+      <li><strong>Application Verification:</strong> The administrator checks submitted details and updates application status.</li>
+      <li><strong>Application Status Tracking:</strong> Users can check whether their applications are submitted, under review, approved, or rejected.</li>
+      <li><strong>Beneficiary Management:</strong> The administrator maintains records of approved beneficiaries and searches beneficiary information.</li>
+    </ol>
+
+    <!-- Tech Stack -->
+    <h2>TECHNOLOGY STACK :-</h2>
+    <p><strong>Frontend:</strong></p>
+    <ul>
+      <li>React 19</li>
+      <li>Vite</li>
+      <li>Tailwind CSS</li>
+    </ul>
+    <p><strong>Backend:</strong></p>
+    <ul>
+      <li>Node.js</li>
+      <li>Express.js</li>
+    </ul>
+    <p><strong>Database:</strong></p>
+    <ul>
+      <li>MongoDB with Mongoose ODM</li>
+    </ul>
+    <p><strong>Development Tools:</strong></p>
+    <ul>
+      <li>Visual Studio Code, Web Browser, Postman, Git</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- UML Diagrams -->
+    <h2>UML DIAGRAMS :-</h2>
+
+    <h3>Use Case Diagram :-</h3>
+    <div class="mermaid">
+flowchart LR
+    Citizen((Citizen))
+    Admin((Administrator))
+
+    subgraph System["Government Scheme Beneficiary Management System"]
+        UC1[Register]
+        UC2[Login]
+        UC3[View Schemes]
+        UC4[Apply for Scheme]
+        UC5[Track Application Status]
+        UC6[Manage Schemes]
+        UC7[View Applications]
+        UC8[Verify Applications]
+        UC9[Approve / Reject Applications]
+        UC10[Manage Beneficiary Records]
+    end
+
+    Citizen --> UC1
+    Citizen --> UC2
+    Citizen --> UC3
+    Citizen --> UC4
+    Citizen --> UC5
+
+    Admin --> UC2
+    Admin --> UC6
+    Admin --> UC7
+    Admin --> UC8
+    Admin --> UC9
+    Admin --> UC10
+    </div>
+
+    <h3>ER Diagram :-</h3>
+    <div class="mermaid">
+erDiagram
+    USERS ||--o{ APPLICATIONS : "submits"
+    SCHEMES ||--o{ APPLICATIONS : "belongs to"
+
+    USERS {
+        ObjectId userId PK
+        string name
+        string email
+        string password
+        string phone
+        string role
+        string address
+        string district
+    }
+
+    SCHEMES {
+        ObjectId schemeId PK
+        string title
+        string code
+        string category
+        string description
+        string benefits
+        date deadline
+        boolean isActive
+    }
+
+    APPLICATIONS {
+        ObjectId applicationId PK
+        ObjectId userId FK
+        ObjectId schemeId FK
+        string applicationNumber
+        string status
+        string adminRemarks
+        date createdAt
+    }
+    </div>
+
+    <div class="page-break"></div>
+
+    <h3>Class Diagram :-</h3>
+    <div class="mermaid">
+classDiagram
+    class User {
+        +String userId
+        +String name
+        +String email
+        +String password
+        +String phone
+        +String role
+        +String address
+        +register()
+        +login()
+    }
+
+    class Scheme {
+        +String schemeId
+        +String title
+        +String code
+        +String category
+        +String benefits
+        +Date deadline
+        +Boolean isActive
+        +addScheme()
+        +updateScheme()
+        +toggleStatus()
+    }
+
+    class Application {
+        +String applicationId
+        +String applicationNumber
+        +String userId
+        +String schemeId
+        +String status
+        +String adminRemarks
+        +submitApplication()
+        +updateStatus()
+        +viewApplication()
+    }
+
+    User "1" --> "*" Application : submits
+    Scheme "1" --> "*" Application : has
+    </div>
+
+    <h3>Activity Diagram :-</h3>
+    <div class="mermaid">
+flowchart TD
+    A([Start]) --> B[Citizen Registers / Logs in]
+    B --> C[Browse Available Schemes]
+    C --> D[Fill Application Form]
+    D --> E[Submit Application]
+    E --> F[Status: Submitted]
+    F --> G[Admin Reviews Application]
+    G --> H[Status: Under Review]
+    H --> I{Admin Decision}
+    I -- Reject --> J[Status: Rejected with Remarks]
+    I -- Approve --> K[Status: Approved]
+    K --> L[Status: Disbursed]
+    J --> M([End])
+    L --> M
+    </div>
+
+    <h3>Sequence Diagram :-</h3>
+    <div class="mermaid">
+sequenceDiagram
+    actor Citizen
+    participant UI as Frontend (React)
+    participant API as Backend (Express)
+    participant DB as Database (MongoDB)
+    actor Admin
+
+    Citizen->>UI: Submit Scheme Application
+    UI->>API: POST /api/applications
+    API->>DB: Save application (Status: Submitted)
+    DB-->>API: Application Saved
+    API-->>UI: 201 Created (Application Number)
+
+    Admin->>UI: Open Applications Queue
+    UI->>API: GET /api/applications
+    API->>DB: Fetch applications
+    DB-->>API: Return applications
+    API-->>UI: Display applications list
+
+    Admin->>UI: Update Status (Approved)
+    UI->>API: PATCH /api/applications/:id/status
+    API->>DB: Update application status
+    DB-->>API: Status updated
+    API-->>UI: Success confirmation
+    </div>
+
+    <!-- Folder Structure -->
+    <h2>FOLDER STRUCTURE :-</h2>
+    <pre>
+c:\FSD II\project\
+├── backend/
+│   ├── src/
+│   │   ├── config/db.js
+│   │   ├── models/User.js, Scheme.js, Application.js
+│   │   ├── middleware/auth.js, validate.js, errorHandler.js
+│   │   ├── controllers/authController.js, schemeController.js, applicationController.js, adminController.js
+│   │   ├── routes/authRoutes.js, schemeRoutes.js, applicationRoutes.js, adminRoutes.js
+│   │   ├── utils/statusWorkflow.js
+│   │   ├── seeds/seed.js
+│   │   └── server.js
+│   └── package.json
+└── frontend/
+    ├── src/
+    │   ├── api/client.js, authApi.js, schemeApi.js, applicationApi.js, adminApi.js
+    │   ├── context/AuthContext.jsx
+    │   ├── components/Navbar.jsx, Footer.jsx, StatusBadge.jsx, WorkflowTimeline.jsx, Modal.jsx
+    │   ├── pages/HomePage.jsx, SchemeCataloguePage.jsx, SchemeDetailsPage.jsx, LoginPage.jsx,
+    │   │         RegisterPage.jsx, ApplicationFormPage.jsx, BeneficiaryDashboardPage.jsx, AdminDashboardPage.jsx
+    │   ├── App.jsx
+    │   └── main.jsx
+    └── package.json
+    </pre>
+
+    <!-- Implemented Screens -->
+    <h2>IMPLEMENTED SCREENS :-</h2>
+    <ul>
+      <li><strong>Home Screen:</strong> Search bar, category quick access, overview metrics, and featured open schemes.</li>
+      <li><strong>Schemes Catalogue Screen:</strong> Filterable grid with category pills, keyword search, and open/closed filters.</li>
+      <li><strong>Scheme Details Screen:</strong> Full description, eligibility criteria, benefits summary, and application action.</li>
+      <li><strong>Registration Screen:</strong> Citizen sign-up form with name, email, password, phone, address, and category.</li>
+      <li><strong>Login Screen:</strong> User sign-in with email and password, plus quick-login test presets.</li>
+      <li><strong>Application Form Screen:</strong> Multi-section form capturing applicant details, criteria declarations, and document records.</li>
+      <li><strong>Beneficiary Dashboard Screen:</strong> List of citizen's submitted applications, status filtering, visual timeline, and printable slip.</li>
+      <li><strong>Admin Dashboard Screen:</strong> Analytics summary, scheme manager (add/edit/toggle), application review queue, and beneficiary roster.</li>
+    </ul>
+
+    <!-- Conclusion & Future Scope -->
+    <h2>CONCLUSION & FUTURE SCOPE :-</h2>
+    <h3>Conclusion:</h3>
+    <p>
+      The Government Scheme Beneficiary Management System successfully addresses the challenges of manual application processing. By centralizing scheme management, automating status workflows, and providing transparency for citizens and administrators, the system reduces paperwork, prevents duplication, and accelerates welfare delivery.
+    </p>
+    <h3>Future Scope:</h3>
+    <ul>
+      <li>SMS and email notification integration for instant status updates.</li>
+      <li>Regional language localization (Telugu, Hindi, Tamil).</li>
+      <li>Automated eligibility recommendation based on user demographics.</li>
+    </ul>
+
+    <!-- References -->
+    <h2>REFERENCES :-</h2>
+    <ol>
+      <li>React Documentation - https://react.dev</li>
+      <li>Node.js & Express.js Documentation - https://expressjs.com</li>
+      <li>MongoDB Documentation - https://mongodb.com</li>
+      <li>Mongoose Documentation - https://mongoosejs.com</li>
+      <li>Tailwind CSS - https://tailwindcss.com</li>
+    </ol>
+  </div>
+</body>
+</html>

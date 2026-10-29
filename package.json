@@ -1,0 +1,25 @@
+{
+  "name": "government-scheme-beneficiary-management-system",
+  "version": "1.0.0",
+  "description": "Full-stack Government Scheme Beneficiary Management System (FSD-2)",
+  "private": true,
+  "scripts": {
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "seed": "npm --prefix backend run seed",
+    "server": "npm --prefix backend start",
+    "server:dev": "npm --prefix backend run dev",
+    "client": "npm --prefix frontend run dev",
+    "build:client": "npm --prefix frontend run build",
+    "start": "node backend/src/server.js"
+  },
+  "keywords": [
+    "fsd",
+    "react",
+    "express",
+    "mongodb",
+    "beneficiary-management",
+    "government-schemes"
+  ],
+  "author": "Academic Project Team",
+  "license": "ISC"
+}
