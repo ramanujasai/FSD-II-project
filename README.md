@@ -196,3 +196,14 @@ All 9 test assertions run end-to-end against the local database and verify:
 7. Role-scoped data isolation (Beneficiary sees only own records)
 8. Workflow state machine enforcement (Invalid transition blocked with 400; valid sequence `Submitted -> Under Review -> Approved -> Disbursed` completes with demo DBT voucher)
 9. Admin metrics and beneficiary directory roster aggregation
+
+
+---
+
+## 9. Live Demo
+
+Explore the deployed Government Scheme Beneficiary Management System:
+
+**[Open Live Demo](https://government-scheme-beneficiary-manag.vercel.app/)**
+
+> The live deployment is an academic demonstration. Use the demo accounts listed above where applicable.
