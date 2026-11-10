@@ -695,7 +695,7 @@ const seedDatabase = async () => {
     console.log('  Password: [configured via SEED_BENEFICIARY_PASSWORD]');
     console.log('BENEFICIARY 2:');
     console.log('  Email:    priya.sundaram@example.com');
-    console.log('  Password: Citizen@12345');
+    console.log('  Password: [configured via SEED_BENEFICIARY_PASSWORD]');
     console.log('====================================================');
 
     await mongoose.disconnect();
