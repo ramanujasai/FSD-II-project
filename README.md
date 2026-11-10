@@ -46,16 +46,19 @@ The **Government Scheme Beneficiary Management System** is a full-stack civic we
 
 ## 4. Environment Configuration
 
-Copy `.env.example` to `backend/.env` (or configure root `.env`):
+Copy `backend/.env.example` to `backend/.env`, then set unique secrets locally. Never commit `.env` files:
 
 ```bash
 # backend/.env
 PORT=5000
 MONGODB_URI=mongodb://127.0.0.1:27017/govt_scheme_db
-JWT_SECRET=demo_super_secret_jwt_key_2026_change_in_production
+JWT_SECRET=<generate-a-unique-random-secret-of-at-least-32-characters>
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
+SEED_ADMIN_PASSWORD=<unique-password-at-least-12-characters>
+SEED_BENEFICIARY_PASSWORD=<unique-password-at-least-12-characters>
+SEED_ALLOW_RESET=true
 ```
 
 ---
@@ -77,7 +80,7 @@ cd ..
 ```
 
 ### Step 2: Seed the Database
-Populate the database with fictional welfare schemes, admin officers, citizen beneficiaries, and sample application records across diverse workflow states:
+The seed script creates fictional schemes and sample accounts. It resets the demo collections, so only run it against a disposable development database. Configure `SEED_ADMIN_PASSWORD`, `SEED_BENEFICIARY_PASSWORD`, and explicitly set `SEED_ALLOW_RESET=true` in your local `backend/.env` first:
 ```bash
 cd backend
 npm run seed
@@ -115,39 +118,11 @@ npm start
 
 ---
 
-## 6. Demo Login Credentials
+## 6. Demo Accounts
 
-The seed script initializes demo accounts with pre-populated records:
+Demo accounts are created by the seed script using passwords supplied through local environment variables. Credentials are intentionally not published in this repository. After seeding, use the configured passwords to sign in.
 
-### 1. Administrative Officers
-* **Admin Director:**
-  * **Email:** `admin@demo.gov.local`
-  * **Password:** `Admin@12345`
-  * **Role:** `admin` (Full access: Scheme management, application review, beneficiary roster)
-* **Verification Officer:**
-  * **Email:** `officer@demo.gov.local`
-  * **Password:** `Admin@12345`
-  * **Role:** `admin`
-
-> *Note:* In accordance with security requirements, admin accounts **cannot be created via public registration**; they are strictly provisioned through the seed process or system database administration.
-
-### 2. Citizen Beneficiaries
-* **Beneficiary 1 (Farmer):**
-  * **Email:** `citizen.rahul@example.com`
-  * **Password:** `Citizen@12345`
-  * *Sample applications: Kisan Solar Water Pump (Disbursed/Submitted)*
-* **Beneficiary 2 (Student):**
-  * **Email:** `priya.sundaram@example.com`
-  * **Password:** `Citizen@12345`
-  * *Sample applications: Pratibha Higher Education Merit Fellowship (Under Review)*
-* **Beneficiary 3 (Artisan):**
-  * **Email:** `anita.devi@example.com`
-  * **Password:** `Citizen@12345`
-  * *Sample applications: Mahila Micro-Enterprise Seed Capital (Approved)*
-
-*(One-click quick login buttons are also provided directly on the Login screen for testing convenience).*
-
----
+Administrator accounts are provisioned only by the seed process or trusted database administration; public registration always creates beneficiary accounts.
 
 ## 7. REST API Outline
 
@@ -206,4 +181,14 @@ Explore the deployed Government Scheme Beneficiary Management System:
 
 **[Open Live Demo](https://government-scheme-beneficiary-manag.vercel.app/)**
 
-> The live deployment is an academic demonstration. Use the demo accounts listed above where applicable.
+> The live deployment is an academic demonstration. Configure deployment secrets and provision fresh demo credentials before enabling sign-in.
+
+
+## 10. Security configuration
+
+- Set a unique `JWT_SECRET` of at least 32 characters; the server refuses to start without it.
+- In production, configure `MONGODB_URI` and `CLIENT_URL` explicitly. `CLIENT_URL` accepts a comma-separated allowlist of frontend origins.
+- Rotate any database/JWT credentials that were previously committed or used in a public deployment. Removing a file from the latest commit does not remove it from Git history.
+- Keep environment files out of Git. Only `.env.example` files belong in the repository.
+- The seed command deletes existing demo collections and requires explicit `SEED_ALLOW_RESET=true`; never point it at production data.
+- This academic prototype is not a production government service. Add rate limiting, security headers, monitoring, backup/restore testing, and independent security testing before any real deployment.
