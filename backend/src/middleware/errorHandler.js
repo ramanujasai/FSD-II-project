@@ -1,30 +1,30 @@
 export const errorHandler = (err, req, res, next) => {
-  let error = { ...err };
-  error.message = err.message;
+  if (res.headersSent) return next(err);
 
-  // Log error details for server diagnostics
-  console.error('[Error Details]', {
-    message: err.message,
-    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+  const isProduction = process.env.NODE_ENV === 'production';
+  const statusCode = err.statusCode || err.status || 500;
+
+  console.error('[API Error]', {
+    method: req.method,
+    path: req.originalUrl,
+    statusCode,
     name: err.name
   });
 
-  // Mongoose bad ObjectId (CastError)
   if (err.name === 'CastError') {
-    const message = `Resource not found with id: ${err.value}`;
-    return res.status(404).json({ success: false, message });
+    return res.status(404).json({ success: false, message: 'Requested resource was not found.' });
   }
 
-  // Mongoose duplicate key error (code 11000)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue || {})[0] || 'field';
-    const message = `A record with this ${field} already exists.`;
-    return res.status(409).json({ success: false, message });
+    return res.status(409).json({
+      success: false,
+      message: `A record with this ${field} already exists.`
+    });
   }
 
-  // Mongoose validation error
   if (err.name === 'ValidationError') {
-    const messages = Object.values(err.errors).map((val) => val.message);
+    const messages = Object.values(err.errors || {}).map((item) => item.message);
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
@@ -32,9 +32,17 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
-  // Default to 500 server error
-  res.status(error.statusCode || 500).json({
-    success: false,
-    message: error.message || 'Internal Server Error'
-  });
+  if (err.type === 'entity.too.large') {
+    return res.status(413).json({ success: false, message: 'Request payload is too large.' });
+  }
+
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ success: false, message: 'Request body contains invalid JSON.' });
+  }
+
+  const safeMessage = statusCode >= 500 && isProduction
+    ? 'An unexpected server error occurred.'
+    : (err.message || 'Internal Server Error');
+
+  return res.status(statusCode).json({ success: false, message: safeMessage });
 };
