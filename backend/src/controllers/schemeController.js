@@ -1,33 +1,25 @@
 import { Scheme } from '../models/Scheme.js';
 
-// @desc    Get all schemes (with search & category filtering)
-// @route   GET /api/schemes
-// @access  Public
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export const getSchemes = async (req, res, next) => {
   try {
     const { search, category, status } = req.query;
     const filter = {};
 
-    // Filter by category
-    if (category && category !== 'All') {
-      filter.category = category;
-    }
+    if (category && category !== 'All') filter.category = category;
 
-    // Filter by active status
-    // If status=all is requested, only admin can view closed schemes; otherwise default to active
-    if (status === 'all') {
-      if (!req.user || req.user.role !== 'admin') {
-        filter.isActive = true;
-      }
-    } else if (status === 'closed') {
+    if (status === 'all' && req.user?.role === 'admin') {
+      // Administrators may see both active and closed schemes.
+    } else if (status === 'closed' && req.user?.role === 'admin') {
       filter.isActive = false;
     } else {
+      // Public and beneficiary users can only see active schemes.
       filter.isActive = true;
     }
 
-    // Search query on title, shortDescription, code, or department
-    if (search && search.trim()) {
-      const term = search.trim();
+    if (typeof search === 'string' && search.trim()) {
+      const term = escapeRegex(search.trim().slice(0, 100));
       filter.$or = [
         { title: { $regex: term, $options: 'i' } },
         { shortDescription: { $regex: term, $options: 'i' } },
@@ -37,137 +29,89 @@ export const getSchemes = async (req, res, next) => {
     }
 
     const schemes = await Scheme.find(filter).sort({ createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: schemes.length,
-      schemes
-    });
+    res.status(200).json({ success: true, count: schemes.length, schemes });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get single scheme details
-// @route   GET /api/schemes/:id
-// @access  Public
 export const getSchemeById = async (req, res, next) => {
   try {
     const scheme = await Scheme.findById(req.params.id);
-    if (!scheme) {
-      return res.status(404).json({
-        success: false,
-        message: 'Government scheme not found'
-      });
+    if (!scheme || (!scheme.isActive && req.user?.role !== 'admin')) {
+      return res.status(404).json({ success: false, message: 'Government scheme not found' });
     }
-
-    res.status(200).json({
-      success: true,
-      scheme
-    });
+    res.status(200).json({ success: true, scheme });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Create a new scheme
-// @route   POST /api/schemes
-// @access  Private (Admin only)
 export const createScheme = async (req, res, next) => {
   try {
     const {
-      title,
-      code,
-      category,
-      shortDescription,
-      fullDescription,
-      sponsoringDepartment,
-      targetAudience,
-      benefits,
-      eligibilityCriteria,
-      requiredDocuments,
-      applicationDeadline,
-      isActive
+      title, code, category, shortDescription, fullDescription, sponsoringDepartment,
+      targetAudience, benefits, eligibilityCriteria, requiredDocuments, applicationDeadline, isActive
     } = req.body;
 
-    const existingCode = await Scheme.findOne({ code: code?.toUpperCase() });
+    const normalizedCode = typeof code === 'string' ? code.trim().toUpperCase() : '';
+    const existingCode = await Scheme.findOne({ code: normalizedCode });
     if (existingCode) {
-      return res.status(409).json({
-        success: false,
-        message: `Scheme with code ${code.toUpperCase()} already exists.`
-      });
+      return res.status(409).json({ success: false, message: `Scheme with code ${normalizedCode} already exists.` });
     }
 
     const scheme = await Scheme.create({
-      title,
-      code: code ? code.toUpperCase() : undefined,
-      category,
-      shortDescription,
-      fullDescription,
+      title, code: normalizedCode, category, shortDescription, fullDescription,
       sponsoringDepartment: sponsoringDepartment || 'Department of Public Empowerment (Fictional Demo)',
-      targetAudience: targetAudience || 'Eligible Citizens',
-      benefits,
-      eligibilityCriteria: eligibilityCriteria || [],
-      requiredDocuments: requiredDocuments || [],
+      targetAudience: targetAudience || 'Eligible Citizens', benefits,
+      eligibilityCriteria: eligibilityCriteria || [], requiredDocuments: requiredDocuments || [],
       applicationDeadline: applicationDeadline || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
-      isActive: isActive !== undefined ? isActive : true,
+      isActive: isActive !== undefined ? Boolean(isActive) : true,
       isFictionalDemo: true
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'Scheme created successfully',
-      scheme
-    });
+    res.status(201).json({ success: true, message: 'Scheme created successfully', scheme });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Update existing scheme
-// @route   PUT /api/schemes/:id
-// @access  Private (Admin only)
 export const updateScheme = async (req, res, next) => {
   try {
-    const scheme = await Scheme.findById(req.params.id);
-    if (!scheme) {
-      return res.status(404).json({
-        success: false,
-        message: 'Scheme not found'
-      });
+    const allowedFields = [
+      'title', 'code', 'category', 'shortDescription', 'fullDescription', 'sponsoringDepartment',
+      'targetAudience', 'benefits', 'eligibilityCriteria', 'requiredDocuments', 'applicationDeadline', 'isActive'
+    ];
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    }
+    if (typeof updates.code === 'string') updates.code = updates.code.trim().toUpperCase();
+
+    if (updates.code) {
+      const duplicate = await Scheme.findOne({ code: updates.code, _id: { $ne: req.params.id } });
+      if (duplicate) return res.status(409).json({ success: false, message: 'A scheme with this code already exists.' });
     }
 
-    const updatedScheme = await Scheme.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true
+    const updatedScheme = await Scheme.findByIdAndUpdate(req.params.id, updates, {
+      new: true, runValidators: true, context: 'query'
     });
 
-    res.status(200).json({
-      success: true,
-      message: 'Scheme updated successfully',
-      scheme: updatedScheme
-    });
+    if (!updatedScheme) return res.status(404).json({ success: false, message: 'Scheme not found' });
+    res.status(200).json({ success: true, message: 'Scheme updated successfully', scheme: updatedScheme });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Close or reopen scheme (toggle active status)
-// @route   PATCH /api/schemes/:id/toggle-status
-// @access  Private (Admin only)
 export const toggleSchemeStatus = async (req, res, next) => {
   try {
     const scheme = await Scheme.findById(req.params.id);
-    if (!scheme) {
-      return res.status(404).json({
-        success: false,
-        message: 'Scheme not found'
-      });
-    }
+    if (!scheme) return res.status(404).json({ success: false, message: 'Scheme not found' });
 
     scheme.isActive = !scheme.isActive;
     await scheme.save();
-
     res.status(200).json({
       success: true,
       message: `Scheme successfully ${scheme.isActive ? 'reopened' : 'closed'}`,
@@ -178,25 +122,21 @@ export const toggleSchemeStatus = async (req, res, next) => {
   }
 };
 
-// @desc    Delete scheme
-// @route   DELETE /api/schemes/:id
-// @access  Private (Admin only)
 export const deleteScheme = async (req, res, next) => {
   try {
     const scheme = await Scheme.findById(req.params.id);
-    if (!scheme) {
-      return res.status(404).json({
+    if (!scheme) return res.status(404).json({ success: false, message: 'Scheme not found' });
+
+    const linkedApplications = await (await import('../models/Application.js')).Application.exists({ scheme: scheme._id });
+    if (linkedApplications) {
+      return res.status(409).json({
         success: false,
-        message: 'Scheme not found'
+        message: 'This scheme has applications linked to it. Close the scheme instead of deleting it.'
       });
     }
 
     await Scheme.findByIdAndDelete(req.params.id);
-
-    res.status(200).json({
-      success: true,
-      message: 'Scheme deleted successfully'
-    });
+    res.status(200).json({ success: true, message: 'Scheme deleted successfully' });
   } catch (error) {
     next(error);
   }
