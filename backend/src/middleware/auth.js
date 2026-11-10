@@ -1,26 +1,33 @@
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
+import { getJwtSecret } from '../config/security.js';
+
+const readBearerToken = (req) => {
+  const header = req.headers.authorization || '';
+  const parts = header.trim().split(/\s+/);
+
+  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer' || !parts[1]) {
+    return null;
+  }
+
+  return parts[1];
+};
 
 export const protect = async (req, res, next) => {
   try {
-    let token;
-
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
-    }
+    const token = readBearerToken(req);
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Authentication required. No token provided.'
+        message: 'Authentication required. Provide a valid Bearer token.'
       });
     }
 
-    const secret = process.env.JWT_SECRET || 'demo_super_secret_jwt_key_2026_change_in_production';
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
+    if (!decoded?.id) {
+      return res.status(401).json({ success: false, message: 'Invalid authentication token.' });
+    }
 
     const user = await User.findById(decoded.id).select('-password');
     if (!user) {
@@ -55,22 +62,17 @@ export const requireAdmin = (req, res, next) => {
 
 export const optionalAuth = async (req, res, next) => {
   try {
-    let token;
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith('Bearer')
-    ) {
-      token = req.headers.authorization.split(' ')[1];
-    }
+    const token = readBearerToken(req);
     if (token) {
-      const secret = process.env.JWT_SECRET || 'demo_super_secret_jwt_key_2026_change_in_production';
-      const decoded = jwt.verify(token, secret);
-      const user = await User.findById(decoded.id).select('-password');
-      if (user) req.user = user;
+      const decoded = jwt.verify(token, getJwtSecret(), { algorithms: ['HS256'] });
+      if (decoded?.id) {
+        const user = await User.findById(decoded.id).select('-password');
+        if (user) req.user = user;
+      }
     }
-    next();
   } catch {
-    // If optional auth fails, continue as unauthenticated
-    next();
+    // Public catalogue requests remain public when an optional token is absent or invalid.
   }
+
+  next();
 };
