@@ -9,7 +9,12 @@ dotenv.config();
 const runVerificationTests = async () => {
   console.log('--- STARTING SYSTEM INTEGRATION & WORKFLOW VALIDATION TESTS ---');
 
-  const BASE_URL = 'http://localhost:5000/api';
+  const BASE_URL = `${process.env.TEST_API_URL || 'http://localhost:5000'}/api`;
+  const citizenPassword = process.env.SEED_BENEFICIARY_PASSWORD;
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+  if (!citizenPassword || !adminPassword) {
+    throw new Error('Set SEED_BENEFICIARY_PASSWORD and SEED_ADMIN_PASSWORD in backend/.env before running integration tests.');
+  }
 
   try {
     // 1. Health Check
@@ -25,7 +30,7 @@ const runVerificationTests = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'citizen.rahul@example.com',
-        password: 'Citizen@12345'
+        password: citizenPassword
       })
     });
     const citizenData = await citizenLoginRes.json();
@@ -40,7 +45,7 @@ const runVerificationTests = async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email: 'admin@demo.gov.local',
-        password: 'Admin@12345'
+        password: adminPassword
       })
     });
     const adminData = await adminLoginRes.json();
@@ -56,7 +61,7 @@ const runVerificationTests = async () => {
       body: JSON.stringify({
         name: 'Attacker Admin',
         email: 'hacker@example.com',
-        password: 'Password@123',
+        password: 'TemporaryTestPassword@123',
         phone: '+91-9999999999',
         role: 'admin'
       })
@@ -174,7 +179,7 @@ const runVerificationTests = async () => {
     console.log(`  Beneficiaries Enrolled in Directory: ${dirData.count}`);
 
     console.log('\n======================================================');
-    console.log('ALL SYSTEM INTEGRATION & SECURITY TESTS PASSED (100%)');
+    console.log('All integration checks completed. Review each result above for failures.');
     console.log('======================================================');
 
     process.exit(0);

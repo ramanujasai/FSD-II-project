@@ -12,7 +12,7 @@ import { protect, requireAdmin, optionalAuth } from '../middleware/auth.js';
 const router = express.Router();
 
 router.get('/', optionalAuth, getSchemes);
-router.get('/:id', getSchemeById);
+router.get('/:id', optionalAuth, getSchemeById);
 
 // Admin-only scheme management
 router.post('/', protect, requireAdmin, createScheme);

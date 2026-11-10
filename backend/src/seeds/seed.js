@@ -8,6 +8,15 @@ import { APPLICATION_STATUS } from '../utils/statusWorkflow.js';
 dotenv.config();
 
 const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/govt_scheme_db';
+const adminPassword = process.env.SEED_ADMIN_PASSWORD;
+const beneficiaryPassword = process.env.SEED_BENEFICIARY_PASSWORD;
+
+if (!adminPassword || adminPassword.length < 12 || !beneficiaryPassword || beneficiaryPassword.length < 12) {
+  throw new Error('Set SEED_ADMIN_PASSWORD and SEED_BENEFICIARY_PASSWORD to unique values of at least 12 characters.');
+}
+if (process.env.SEED_ALLOW_RESET !== 'true') {
+  throw new Error('Seeding resets demo collections. Set SEED_ALLOW_RESET=true only for a database you intend to reset.');
+}
 
 const seedDatabase = async () => {
   try {
@@ -25,7 +34,7 @@ const seedDatabase = async () => {
     const admin1 = await User.create({
       name: 'Dr. Alok Verma (Admin Director)',
       email: 'admin@demo.gov.local',
-      password: 'Admin@12345',
+      password: adminPassword,
       phone: '+91-9876543210',
       role: 'admin',
       address: 'Central Secretariat Complex, Block 3',
@@ -39,7 +48,7 @@ const seedDatabase = async () => {
     const admin2 = await User.create({
       name: 'Meera Nair (Verification Officer)',
       email: 'officer@demo.gov.local',
-      password: 'Admin@12345',
+      password: adminPassword,
       phone: '+91-9876543211',
       role: 'admin',
       address: 'District Grievance Redressal Cell',
@@ -54,7 +63,7 @@ const seedDatabase = async () => {
     const citizen1 = await User.create({
       name: 'Rahul Kumar Verma',
       email: 'citizen.rahul@example.com',
-      password: 'Citizen@12345',
+      password: beneficiaryPassword,
       phone: '+91-9811122233',
       role: 'beneficiary',
       address: 'Plot 42, Kisan Basti, Village Rampur',
@@ -68,7 +77,7 @@ const seedDatabase = async () => {
     const citizen2 = await User.create({
       name: 'Priya Sundaram',
       email: 'priya.sundaram@example.com',
-      password: 'Citizen@12345',
+      password: beneficiaryPassword,
       phone: '+91-9822233344',
       role: 'beneficiary',
       address: 'Flat 304, Vidya Vihar Colony',
@@ -82,7 +91,7 @@ const seedDatabase = async () => {
     const citizen3 = await User.create({
       name: 'Anita Devi',
       email: 'anita.devi@example.com',
-      password: 'Citizen@12345',
+      password: beneficiaryPassword,
       phone: '+91-9833344455',
       role: 'beneficiary',
       address: 'House 18, Shilpkari Lane',
@@ -96,7 +105,7 @@ const seedDatabase = async () => {
     const citizen4 = await User.create({
       name: 'Vikramjit Singh',
       email: 'vikram.singh@example.com',
-      password: 'Citizen@12345',
+      password: beneficiaryPassword,
       phone: '+91-9844455566',
       role: 'beneficiary',
       address: 'Shop 12, Industrial Focal Point',
@@ -680,13 +689,13 @@ const seedDatabase = async () => {
     console.log('DEMO ACCOUNTS READY:');
     console.log('ADMIN:');
     console.log('  Email:    admin@demo.gov.local');
-    console.log('  Password: Admin@12345');
+    console.log('  Password: [configured via SEED_ADMIN_PASSWORD]');
     console.log('BENEFICIARY 1:');
     console.log('  Email:    citizen.rahul@example.com');
-    console.log('  Password: Citizen@12345');
+    console.log('  Password: [configured via SEED_BENEFICIARY_PASSWORD]');
     console.log('BENEFICIARY 2:');
     console.log('  Email:    priya.sundaram@example.com');
-    console.log('  Password: Citizen@12345');
+    console.log('  Password: [configured via SEED_BENEFICIARY_PASSWORD]');
     console.log('====================================================');
 
     await mongoose.disconnect();
