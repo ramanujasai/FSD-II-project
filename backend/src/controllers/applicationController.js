@@ -2,44 +2,25 @@ import { Application } from '../models/Application.js';
 import { Scheme } from '../models/Scheme.js';
 import { APPLICATION_STATUS, isValidTransition, getAvailableTransitions } from '../utils/statusWorkflow.js';
 
-// Helper to generate unique human-readable application number
 const generateApplicationNumber = () => {
   const year = new Date().getFullYear();
-  const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+  const randomSuffix = Math.floor(10000000 + Math.random() * 90000000);
   return `APP-${year}-${randomSuffix}`;
 };
 
-// @desc    Submit a new scheme application
-// @route   POST /api/applications
-// @access  Private (Beneficiary)
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 export const submitApplication = async (req, res, next) => {
   try {
     const { schemeId, applicantDetails, schemeSpecificData, documents } = req.body;
-
-    // Check scheme validity
     const scheme = await Scheme.findById(schemeId);
-    if (!scheme) {
-      return res.status(404).json({
-        success: false,
-        message: 'Selected scheme does not exist.'
-      });
-    }
 
-    if (!scheme.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: 'This scheme is currently closed for applications.'
-      });
-    }
-
+    if (!scheme) return res.status(404).json({ success: false, message: 'Selected scheme does not exist.' });
+    if (!scheme.isActive) return res.status(400).json({ success: false, message: 'This scheme is currently closed for applications.' });
     if (new Date(scheme.applicationDeadline) < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: 'The application deadline for this scheme has passed.'
-      });
+      return res.status(400).json({ success: false, message: 'The application deadline for this scheme has passed.' });
     }
 
-    // Check if user already has an active (non-rejected) application for this scheme
     const existingApplication = await Application.findOne({
       user: req.user._id,
       scheme: schemeId,
@@ -53,10 +34,8 @@ export const submitApplication = async (req, res, next) => {
       });
     }
 
-    const applicationNumber = generateApplicationNumber();
-
     const application = await Application.create({
-      applicationNumber,
+      applicationNumber: generateApplicationNumber(),
       user: req.user._id,
       scheme: schemeId,
       applicantDetails: {
@@ -65,55 +44,43 @@ export const submitApplication = async (req, res, next) => {
         email: req.user.email
       },
       schemeSpecificData,
-      documents: documents || [],
+      documents: Array.isArray(documents) ? documents : [],
       status: APPLICATION_STATUS.SUBMITTED,
-      statusHistory: [
-        {
-          status: APPLICATION_STATUS.SUBMITTED,
-          changedBy: req.user._id,
-          changedByName: req.user.name,
-          changedAt: new Date(),
-          remarks: 'Application submitted successfully by citizen.'
-        }
-      ]
+      statusHistory: [{
+        status: APPLICATION_STATUS.SUBMITTED,
+        changedBy: req.user._id,
+        changedByName: req.user.name,
+        changedAt: new Date(),
+        remarks: 'Application submitted successfully by citizen.'
+      }]
     });
 
     const populatedApplication = await Application.findById(application._id)
       .populate('scheme', 'title code category sponsoringDepartment benefits')
       .populate('user', 'name email phone');
 
-    res.status(201).json({
-      success: true,
-      message: 'Application submitted successfully',
-      application: populatedApplication
-    });
+    res.status(201).json({ success: true, message: 'Application submitted successfully', application: populatedApplication });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get applications (Beneficiary gets own; Admin gets all with filters)
-// @route   GET /api/applications
-// @access  Private
 export const getApplications = async (req, res, next) => {
   try {
-    const { status, schemeId, search, page = 1, limit = 50 } = req.query;
+    const { status, schemeId, search } = req.query;
+    const page = Math.max(1, Math.min(100000, Number.parseInt(req.query.page, 10) || 1));
+    const limit = Math.max(1, Math.min(100, Number.parseInt(req.query.limit, 10) || 50));
     const filter = {};
 
-    // Beneficiaries can ONLY see their own applications
-    if (req.user.role !== 'admin') {
-      filter.user = req.user._id;
-    } else {
-      // Admin filters
-      if (schemeId) filter.scheme = schemeId;
-    }
+    if (req.user.role !== 'admin') filter.user = req.user._id;
+    else if (schemeId) filter.scheme = schemeId;
 
-    if (status && status !== 'All') {
+    if (status && status !== 'All' && Object.values(APPLICATION_STATUS).includes(status)) {
       filter.status = status;
     }
 
-    if (search && search.trim()) {
-      const term = search.trim();
+    if (typeof search === 'string' && search.trim()) {
+      const term = escapeRegex(search.trim().slice(0, 100));
       filter.$or = [
         { applicationNumber: { $regex: term, $options: 'i' } },
         { 'applicantDetails.fullName': { $regex: term, $options: 'i' } },
@@ -122,31 +89,23 @@ export const getApplications = async (req, res, next) => {
       ];
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (page - 1) * limit;
+    const [applications, total] = await Promise.all([
+      Application.find(filter)
+        .populate('scheme', 'title code category sponsoringDepartment benefits applicationDeadline')
+        .populate('user', 'name email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Application.countDocuments(filter)
+    ]);
 
-    const applications = await Application.find(filter)
-      .populate('scheme', 'title code category sponsoringDepartment benefits applicationDeadline')
-      .populate('user', 'name email phone')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
-
-    const total = await Application.countDocuments(filter);
-
-    res.status(200).json({
-      success: true,
-      count: applications.length,
-      total,
-      applications
-    });
+    res.status(200).json({ success: true, count: applications.length, total, page, limit, applications });
   } catch (error) {
     next(error);
   }
 };
 
-// @desc    Get single application by ID
-// @route   GET /api/applications/:id
-// @access  Private
 export const getApplicationById = async (req, res, next) => {
   try {
     const application = await Application.findById(req.params.id)
@@ -154,19 +113,11 @@ export const getApplicationById = async (req, res, next) => {
       .populate('user', 'name email phone occupation socialCategory address')
       .populate('statusHistory.changedBy', 'name role');
 
-    if (!application) {
-      return res.status(404).json({
-        success: false,
-        message: 'Application not found.'
-      });
-    }
+    if (!application) return res.status(404).json({ success: false, message: 'Application not found.' });
 
-    // Role-based access control
-    if (req.user.role !== 'admin' && application.user._id.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied. You can only view your own applications.'
-      });
+    const ownerId = application.user?._id?.toString();
+    if (req.user.role !== 'admin' && ownerId !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only view your own applications.' });
     }
 
     res.status(200).json({
@@ -179,31 +130,19 @@ export const getApplicationById = async (req, res, next) => {
   }
 };
 
-// @desc    Update application workflow status (Admin decision)
-// @route   PATCH /api/applications/:id/status
-// @access  Private (Admin only)
 export const updateApplicationStatus = async (req, res, next) => {
   try {
     const { status: targetStatus, remarks } = req.body;
-
     const application = await Application.findById(req.params.id);
-    if (!application) {
-      return res.status(404).json({
-        success: false,
-        message: 'Application not found'
-      });
-    }
+    if (!application) return res.status(404).json({ success: false, message: 'Application not found' });
 
     const currentStatus = application.status;
-
-    // Enforce workflow validation rule
     if (!isValidTransition(currentStatus, targetStatus)) {
-      const allowed = getAvailableTransitions(currentStatus);
       return res.status(400).json({
         success: false,
         message: `Invalid status transition from "${currentStatus}" to "${targetStatus}".`,
-        allowedTransitions: allowed,
-        workflowRule: 'Workflow progression is: Submitted → Under Review → Approved / Rejected → Disbursed (from Approved).'
+        allowedTransitions: getAvailableTransitions(currentStatus),
+        workflowRule: 'Submitted → Under Review → Approved / Rejected → Disbursed (from Approved).'
       });
     }
 
@@ -211,17 +150,13 @@ export const updateApplicationStatus = async (req, res, next) => {
     application.adminRemarks = remarks || `Status transitioned to ${targetStatus} by administrative officer.`;
 
     const now = new Date();
-    if (targetStatus === APPLICATION_STATUS.APPROVED) {
-      application.approvedAt = now;
-    } else if (targetStatus === APPLICATION_STATUS.REJECTED) {
-      application.rejectedAt = now;
-    } else if (targetStatus === APPLICATION_STATUS.DISBURSED) {
+    if (targetStatus === APPLICATION_STATUS.APPROVED) application.approvedAt = now;
+    if (targetStatus === APPLICATION_STATUS.REJECTED) application.rejectedAt = now;
+    if (targetStatus === APPLICATION_STATUS.DISBURSED) {
       application.disbursedAt = now;
-      const randomDemoRef = Math.floor(10000000 + Math.random() * 90000000);
-      application.demoDisbursementReference = `DEMO-DBT-${randomDemoRef}`;
+      application.demoDisbursementReference = `DEMO-DBT-${Math.floor(10000000 + Math.random() * 90000000)}`;
     }
 
-    // Append to status history audit trail
     application.statusHistory.push({
       status: targetStatus,
       changedBy: req.user._id,
@@ -231,7 +166,6 @@ export const updateApplicationStatus = async (req, res, next) => {
     });
 
     await application.save();
-
     const updated = await Application.findById(application._id)
       .populate('scheme', 'title code category benefits')
       .populate('user', 'name email phone');
